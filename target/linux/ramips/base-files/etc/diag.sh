@@ -38,7 +38,10 @@ get_status_led() {
 	nbg-419n2|\
 	pwh2004|\
 	r6220|\
+	tplink,c20-v4|\
+	tplink,c50-v3|\
 	tplink,tl-mr3420-v5|\
+	tplink,tl-wr902ac-v3|\
 	tl-wr840n-v4|\
 	tl-wr840n-v5|\
 	tl-wr841n-v13|\
@@ -69,6 +72,16 @@ get_status_led() {
 	ht-tm02)
 		status_led="$boardname:blue:wlan"
 		;;
+	alfa-network,ac1200rm|\
+	awapn2403|\
+	dir-645|\
+	sk-wb8|\
+	wrh-300cr)
+		status_led="$boardname:green:wps"
+		;;
+	alfa-network,awusfree1)
+		status_led="$boardname:orange:system"
+		;;
 	all0239-3g|\
 	dcs-930|\
 	dir-300-b1|\
@@ -81,7 +94,9 @@ get_status_led() {
 	dir-620-a1|\
 	dir-620-d1|\
 	dwr-512-b|\
+	dlink,dwr-116-a1|\
 	gb-pc1|\
+	gnubee,gb-pc2|\
 	hpm|\
 	hw550-3g|\
 	mac1200rv2|\
@@ -93,6 +108,9 @@ get_status_led() {
 	zbt-wg2626)
 		status_led="$boardname:green:status"
 		;;
+	dlink,dwr-921-c1)
+		status_led="$boardname:green:sigstrength"
+		;;
 	asl26555-8M|\
 	asl26555-16M)
 		status_led="asl26555:green:power"
@@ -101,12 +119,6 @@ get_status_led() {
 	ew1200|\
 	ip2202)
 		status_led="$boardname:green:run"
-		;;
-	awapn2403|\
-	dir-645|\
-	sk-wb8|\
-	wrh-300cr)
-		status_led="$boardname:green:wps"
 		;;
 	c108)
 		status_led="$boardname:green:lan"
@@ -120,10 +132,10 @@ get_status_led() {
 		status_led="$boardname:yellow:status"
 		;;
 	cy-swr1100|\
-	w502u)
+	w502u|\
+	youhua,wr1200js)
 		status_led="$boardname:blue:wps"
 		;;
-	c20|\
 	d240|\
 	dap-1350|\
 	na930|\
@@ -135,13 +147,22 @@ get_status_led() {
 	rt-n14u|\
 	rt-n15|\
 	rt-n56u|\
+	tplink,c20-v1|\
 	wl-330n|\
 	wl-330n3g|\
 	wli-tx4-ag300n|\
 	y1|\
 	y1s|\
-	youku-yk1)
+	youku-yk1|\
+	zorlik,zl5900v2)
 		status_led="$boardname:blue:power"
+		;;
+	dlink,dap-1522-a1|\
+	k2p|\
+	m3|\
+	mir3g|\
+	miwifi-nano)
+		status_led="$boardname:blue:status"
 		;;
 	db-wrt01|\
 	esr-9753|\
@@ -170,11 +191,6 @@ get_status_led() {
 	hc5962)
 		status_led="$boardname:white:status"
 		;;
-	k2p|\
-	m3|\
-	miwifi-nano)
-		status_led="$boardname:blue:status"
-		;;
 	linkits7688)
 		status_led="linkit-smart-7688:orange:wifi"
 		;;
@@ -182,14 +198,11 @@ get_status_led() {
 		status_led="$boardname:blue:wifi"
 		;;
 	gl-mt300n-v2)
-		status_led="$boardname:red:wlan"
+		status_led="$boardname:green:power"
 		;;
 	m4-4M|\
 	m4-8M)
 		status_led="m4:blue:status"
-		;;
-	mir3g)
-		status_led="$boardname:yellow:status"
 		;;
 	miwifi-mini|\
 	zte-q7)
@@ -285,7 +298,8 @@ get_status_led() {
 	zbt-we2026)
 		status_led="$boardname:red:power"
 		;;
-	widora-neo)
+	widora,neo-16m|\
+	widora,neo-32m)
 		status_led="widora:orange:wifi"
 		;;
 	wzr-agl300nh)
@@ -313,6 +327,9 @@ get_status_led() {
 	zbt-we826-16M|\
 	zbt-we826-32M)
 		status_led="zbt-we826:green:power"
+		;;
+	zbtlink,zbt-we1226)
+		status_led="$boardname:green:wlan"
 		;;
 	zbt-wg3526-16M|\
 	zbt-wg3526-32M)
