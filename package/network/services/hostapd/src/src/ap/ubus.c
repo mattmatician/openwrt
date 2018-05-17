@@ -1022,6 +1022,11 @@ int hostapd_ubus_handle_event(struct hostapd_data *hapd, struct hostapd_ubus_req
 		blobmsg_add_u32(&b, "signal", req->frame_info->ssi_signal);
 	blobmsg_add_u32(&b, "freq", hapd->iface->freq);
 
+	if (req->elems) {
+		blobmsg_add_u8(&b, "ht", req->elems->ht_capabilities != 0);
+		blobmsg_add_u8(&b, "vht", req->elems->vht_capabilities != 0);
+	}
+
 	if (!hapd->ubus.notify_response) {
 		ubus_notify(ctx, &hapd->ubus.obj, type, b.head, -1);
 		return WLAN_STATUS_SUCCESS;
