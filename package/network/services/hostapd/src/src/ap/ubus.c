@@ -169,6 +169,7 @@ hostapd_bss_get_clients(struct ubus_context *ctx, struct ubus_object *obj,
 
 	blob_buf_init(&b, 0);
 	blobmsg_add_u32(&b, "freq", hapd->iface->freq);
+	blobmsg_add_u32(&b, "ap_bss_transition", hapd->conf->bss_transition);
 	list = blobmsg_open_table(&b, "clients");
 	for (sta = hapd->sta_list; sta; sta = sta->next) {
 		void *r;
@@ -185,6 +186,7 @@ hostapd_bss_get_clients(struct ubus_context *ctx, struct ubus_object *obj,
 			blobmsg_add_u32(&b, "", sta->rrm_enabled_capa[i]);
 		blobmsg_close_array(&b, r);
 		blobmsg_add_u32(&b, "aid", sta->aid);
+		blobmsg_add_u8(&b, "bss_transition", sta->bss_transition_supported);
 #ifdef CONFIG_TAXONOMY
 		r = blobmsg_alloc_string_buffer(&b, "signature", 1024);
 		if (retrieve_sta_taxonomy(hapd, sta, r, 1024) > 0)
