@@ -446,6 +446,104 @@ hostapd_switch_chan(struct ubus_context *ctx, struct ubus_object *obj,
 #endif
 
 enum {
+	SEND_CSA_CHAN,
+	SEND_CSA_BCN_COUNT,
+	SEND_CSA_ADDR,
+	__SEND_CSA_MAX
+};
+
+static const struct blobmsg_policy send_csa_policy[__SEND_CSA_MAX] = {
+	[SEND_CSA_CHAN] = { "chan", BLOBMSG_TYPE_INT32 },
+	[SEND_CSA_BCN_COUNT] = { "bcn_count", BLOBMSG_TYPE_INT32 },
+	[SEND_CSA_ADDR] = { "addr", BLOBMSG_TYPE_STRING },
+};
+
+/* https://mrncciew.com/2014/10/29/cwap-channel-switch-announcement/ */
+/* https://blogs.arubanetworks.com/industries/802-11-action-frames/ */
+/*
+	in /etc/config/wireless add
+	    option macaddr '00:00:00:00:00:01'
+	to
+		wifi-iface section
+*/
+static int
+hostapd_send_csa(struct ubus_context *ctx, struct ubus_object *obj,
+		       struct ubus_request_data *ureq, const char *method,
+		       struct blob_attr *msg)
+{
+	struct blob_attr *tb[__SEND_CSA_MAX];
+	struct hostapd_data *hapd = container_of(obj, struct hostapd_data, ubus.obj);
+	struct wpabuf *buf;
+	u8 addr[ETH_ALEN];
+	int ret;
+	int buf_len = 7;
+
+	blobmsg_parse(send_csa_policy, __SEND_CSA_MAX, tb, blob_data(msg), blob_len(msg));
+
+	if (!tb[SEND_CSA_CHAN] || !tb[SEND_CSA_ADDR])
+		return UBUS_STATUS_INVALID_ARGUMENT;
+	
+	if (hwaddr_aton(blobmsg_data(tb[SEND_CSA_ADDR]), addr))
+		return UBUS_STATUS_INVALID_ARGUMENT;
+
+	buf = wpabuf_alloc(buf_len);
+	if (!buf)
+		return UBUS_STATUS_UNKNOWN_ERROR;
+
+	/* 1: spectrum managment */
+	wpabuf_put_u8(buf, 0);
+
+	/* 2: csa */
+	wpabuf_put_u8(buf, 4);
+
+	/* 3-6: channel switch announcment element */
+	/* 3: element id */
+	wpabuf_put_u8(buf, 37);
+
+	/* 3: length */
+	wpabuf_put_u8(buf, 3);
+
+	/* 4: channel switch mode */
+	wpabuf_put_u8(buf, 0);
+
+	/* 5: new channel number */
+	wpabuf_put_u8(buf, blobmsg_get_u32(tb[SEND_CSA_CHAN]));
+
+	/* 6: channel switch count */
+	wpabuf_put_u8(buf, blobmsg_get_u32(tb[SEND_CSA_BCN_COUNT])); // immidately
+
+	/*
+	The Secondary Channel Offset element is defined in 9.4.2.20. This element is present when switching to a
+	40 MHz or wider channel. It can be present when switching to a 20 MHz channel (in which case the
+	Secondary Channel Offset field is set to SCN); see 11.40.4.
+
+	The Mesh Channel Switch Parameters element is defined in 9.4.2.103. This element is present when a mesh
+	STA performs MBSS channel switching. Otherwise, the Mesh Channel Switch Parameters element is not
+	present.
+	*/
+
+	/* secondary channel offset (3 Byte) */
+	// TODO
+	// ELEMENT ID: 62 (Secondary Channel Offset)
+	// LENGTH: 1 Byte for Secondary Channel Offset
+	// Secondary Channel Offset: 0 (no switch from 20 to 40 MHz...)
+
+	/* MESH CHANNEL SWITCH PARAMETER */
+	// ELEMENT ID: 118
+	// LENGTH: 6
+	// The Time To Live field is coded as an unsigned integer and indicates the remaining number of hops allowed for this element
+	// TIME TO LIVE: 0
+
+
+	ret = hostapd_drv_send_action(hapd, hapd->iface->freq, 0, addr, wpabuf_head(buf), wpabuf_len(buf));
+	if (ret < 0)
+		return -ret;
+
+	return 0;
+}
+
+
+enum {
 	VENDOR_ELEMENTS,
 	__VENDOR_ELEMENTS_MAX
 };
@@ -966,6 +1064,8 @@ static const struct ubus_method bss_methods[] = {
 	UBUS_METHOD_NOARG("rrm_nr_list", hostapd_rrm_nr_list),
 	UBUS_METHOD("rrm_nr_set", hostapd_rrm_nr_set, nr_set_policy),
 	UBUS_METHOD("rrm_beacon_req", hostapd_rrm_beacon_req, beacon_req_policy),
+	UBUS_METHOD("send_csa", hostapd_send_csa, send_csa_policy),
+	
 #ifdef CONFIG_WNM_AP
 	UBUS_METHOD("wnm_disassoc_imminent", hostapd_wnm_disassoc_imminent, wnm_disassoc_policy),
 #endif
