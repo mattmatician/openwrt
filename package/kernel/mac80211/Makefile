@@ -30,6 +30,7 @@ PKG_DRIVERS = \
 	mt7601u \
 	p54-common p54-pci p54-usb \
 	rsi91x rsi91x-usb rsi91x-sdio\
+	wil6210 \
 	wlcore wl12xx wl18xx \
 	zd1211rw
 
@@ -555,6 +556,22 @@ define KernelPackage/zd1211rw/install
 	$(INSTALL_DIR) $(1)/lib/firmware/zd1211
 	$(INSTALL_DATA) $(PKG_BUILD_DIR)/$(ZD1211FW_NAME)/zd1211* $(1)/lib/firmware/zd1211
 endef
+
+define KernelPackage/wil6210
+	$(call KernelPackage/mac80211/Default)
+	TITLE:=Driver for QCA9008 802.11ad
+	DEPENDS:=@PCI_SUPPORT +kmod-mac80211 +kmod-ath +wil6210-firmware
+	FILES:=$(PKG_BUILD_DIR)/drivers/net/wireless/ath/wil6210/wil6210.ko
+	AUTOLOAD:=$(call AutoProbe,wil6210)
+endef
+
+define KernelPackage/wil6210/description
+	Kernel Module for 802.11ad support on Qualcomm devices
+endef
+
+config-$(call config_package,wil6210) += WIL6210 CFG80211
+config-y += WIL6210
+$(eval $(call KernelPackage,wil6210))
 
 $(eval $(foreach drv,$(PKG_DRIVERS),$(call KernelPackage,$(drv))))
 $(eval $(call KernelPackage,cfg80211))
