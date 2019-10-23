@@ -570,8 +570,6 @@ define KernelPackage/wil6210/description
 endef
 
 config-$(call config_package,wil6210) += WIL6210 CFG80211
-config-y += WIL6210
-$(eval $(call KernelPackage,wil6210))
 
 $(eval $(foreach drv,$(PKG_DRIVERS),$(call KernelPackage,$(drv))))
 $(eval $(call KernelPackage,cfg80211))
