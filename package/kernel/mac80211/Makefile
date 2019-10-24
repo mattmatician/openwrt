@@ -418,6 +418,9 @@ config-$(call config_package,rsi91x) += RSI_91X
 config-$(call config_package,rsi91x-usb) += RSI_USB
 config-$(call config_package,rsi91x-sdio) += RSI_SDIO
 
+config-$(call config_package,wil6210) += WIL6210 CFG80211
+config-y += WIL6210
+
 config-$(CONFIG_LEDS_TRIGGERS) += MAC80211_LEDS
 
 MAKE_OPTS:= -C "$(PKG_BUILD_DIR)" \
@@ -568,8 +571,6 @@ endef
 define KernelPackage/wil6210/description
 	Kernel Module for 802.11ad support on Qualcomm devices
 endef
-
-config-$(call config_package,wil6210) += WIL6210 CFG80211
 
 $(eval $(foreach drv,$(PKG_DRIVERS),$(call KernelPackage,$(drv))))
 $(eval $(call KernelPackage,cfg80211))
