@@ -1,6 +1,6 @@
 --- a/drivers/net/phy/Kconfig
 +++ b/drivers/net/phy/Kconfig
-@@ -588,6 +588,13 @@ config XILINX_GMII2RGMII
+@@ -584,6 +584,13 @@ config XILINX_GMII2RGMII
  	  the Reduced Gigabit Media Independent Interface(RGMII) between
  	  Ethernet physical media devices and the Gigabit Ethernet controller.
  
