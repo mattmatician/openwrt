@@ -78,21 +78,21 @@ CT_FIRMWARE_FILE_FULL_HTT = $(1)-$($(1)_FIRMWARE_FILE_CT_FULL_HTT)
 CT_FIRMWARE_FILE_HTT = $(1)-$($(1)_FIRMWARE_FILE_CT_HTT)
 
 define Download/ct-firmware
-  URL:=https://www.candelatech.com/downloads/$(2)
+  URL:=https://sources.openwrt.org/
   FILE:=$(call CT_FIRMWARE_FILE,$(1))
-  URL_FILE:=$($(1)_FIRMWARE_FILE_CT)
+  URL_FILE:=$(call CT_FIRMWARE_FILE,$(1))
 endef
 
 define Download/ct-firmware-full-htt
-  URL:=https://www.candelatech.com/downloads/$(2)
+  URL:=https://sources.openwrt.org/
   FILE:=$(call CT_FIRMWARE_FILE_FULL_HTT,$(1))
-  URL_FILE:=$($(1)_FIRMWARE_FILE_CT_FULL_HTT)
+  URL_FILE:=$(call CT_FIRMWARE_FILE_FULL_HTT,$(1))
 endef
 
 define Download/ct-firmware-htt
-  URL:=https://www.candelatech.com/downloads/$(2)
+  URL:=https://sources.openwrt.org/
   FILE:=$(call CT_FIRMWARE_FILE_HTT,$(1))
-  URL_FILE:=$($(1)_FIRMWARE_FILE_CT_HTT)
+  URL_FILE:=$(call CT_FIRMWARE_FILE_HTT,$(1))
 endef
 
 QCA988X_FIRMWARE_FILE_CT:=firmware-2-ct-full-community-22.bin.lede.019
