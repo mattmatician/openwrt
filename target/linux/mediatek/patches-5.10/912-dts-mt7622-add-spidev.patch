@@ -1,0 +1,14 @@
+--- a/arch/arm64/boot/dts/mediatek/mt7622-bananapi-bpi-r64.dts
++++ b/arch/arm64/boot/dts/mediatek/mt7622-bananapi-bpi-r64.dts
+@@ -599,6 +599,11 @@
+ 	pinctrl-names = "default";
+ 	pinctrl-0 = <&spic0_pins>;
+ 	status = "okay";
++	spidev: spidev@0 {
++		compatible = "linux,spidev";
++		spi-max-frequency = <1000000>;
++		reg = <0>;
++	};
+ };
+ 
+ &spi1 {
