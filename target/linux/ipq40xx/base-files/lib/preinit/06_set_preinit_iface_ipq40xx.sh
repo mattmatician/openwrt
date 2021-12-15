@@ -3,13 +3,16 @@ set_preinit_iface() {
 
 	case $(board_name) in
 	aruba,ap-303| \
+	mikrotik,sxtsq-5-ac| \
+	meraki,mr33)
+		ifname=lan
+		;;
 	asus,rt-ac58u| \
 	avm,fritzbox-4040| \
 	ezviz,cs-w3-wd1200g-eup| \
 	glinet,gl-b1300| \
 	linksys,ea8300| \
 	linksys,mr8300| \
-	meraki,mr33| \
 	zyxel,nbg6617)
 		ifname=eth0
 		;;
