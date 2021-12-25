@@ -1,0 +1,272 @@
+From ba2c23d253298ab55fbeb11bd02c76580809c937 Mon Sep 17 00:00:00 2001
+From: Michael Walle <michael@walle.cc>
+Date: Thu, 3 Dec 2020 17:29:59 +0100
+Subject: [PATCH] mtd: spi-nor: keep lock bits if they are non-volatile
+
+Traditionally, Linux unlocks the whole flash because there are legacy
+devices which has the write protection bits set by default at startup.
+If you actually want to use the flash protection bits, eg. because there
+is a read-only part for a bootloader, this automatic unlocking is
+harmful. If there is no hardware write protection in place (usually
+called WP#), a startup of the kernel just discards this protection.
+
+I've gone through the datasheets of all the flashes (except the Intel
+ones where I could not find any datasheet nor reference) which supports
+the unlocking feature and looked how the sector protection was
+implemented. The currently supported flashes can be divided into the
+following two categories:
+ (1) block protection bits are non-volatile. Thus they keep their values
+     at reset and power-cycle
+ (2) flashes where these bits are volatile. After reset or power-cycle,
+     the whole memory array is protected.
+     (a) some devices needs a special "Global Unprotect" command, eg.
+         the Atmel AT25DF041A.
+     (b) some devices require to clear the BPn bits in the status
+         register.
+
+Due to the reasons above, we do not want to clear the bits for flashes
+which belong to category (1). Fortunately for us, only Atmel flashes
+fall into category (2a). Implement the "Global Protect" and "Global
+Unprotect" commands for these. For (2b) we can use normal block
+protection locking scheme.
+
+This patch adds a new flag to indicate the case (2). Only if we have
+such a flash we unlock the whole flash array. To be backwards compatible
+it also introduces a kernel configuration option which restores the
+complete legacy behavior ("Disable write protection on any flashes").
+Hopefully, this will clean up "unlock the entire flash for legacy
+devices" once and for all.
+
+For reference here are the actually commits which introduced the legacy
+behavior (and extended the behavior to other chip manufacturers):
+
+commit f80e521c916cb ("mtd: m25p80: add support for the Intel/Numonyx {16,32,64}0S33B SPI flash chips")
+commit ea60658a08f8f ("mtd: m25p80: disable SST software protection bits by default")
+commit 7228982442365 ("[MTD] m25p80: fix bug - ATmel spi flash fails to be copied to")
+
+Actually, this might also fix handling of the Atmel AT25DF flashes,
+because the original commit 7228982442365 ("[MTD] m25p80: fix bug -
+ATmel spi flash fails to be copied to") was writing a 0 to the status
+register, which is a "Global Unprotect". This might not be the case in
+the current code which only handles the block protection bits BP2, BP1
+and BP0. Thus, it depends on the current contents of the status register
+if this unlock actually corresponds to a "Global Unprotect" command. In
+the worst case, the current code might leave the AT25DF flashes in a
+write protected state.
+
+The commit 191f5c2ed4b6f ("mtd: spi-nor: use 16-bit WRR command when QE
+is set on spansion flashes") changed that behavior by just clearing BP2
+to BP0 instead of writing a 0 to the status register.
+
+Further, the commit 3e0930f109e76 ("mtd: spi-nor: Rework the disabling
+of block write protection") expanded the unlock_all() feature to ANY
+flash which supports locking.
+
+Signed-off-by: Michael Walle <michael@walle.cc>
+Signed-off-by: Vignesh Raghavendra <vigneshr@ti.com>
+Reviewed-by: Tudor Ambarus <tudor.ambarus@microchip.com>
+Link: https://lore.kernel.org/r/20201203162959.29589-8-michael@walle.cc
+---
+ drivers/mtd/spi-nor/Kconfig |  44 +++++++++
+ drivers/mtd/spi-nor/atmel.c | 175 ++++++++++++++++++++++++++++++++++--
+ drivers/mtd/spi-nor/core.c  |  35 +++++---
+ drivers/mtd/spi-nor/core.h  |  18 ++++
+ drivers/mtd/spi-nor/esmt.c  |   2 +-
+ drivers/mtd/spi-nor/intel.c |  18 ++--
+ drivers/mtd/spi-nor/sst.c   |  26 +++---
+ 7 files changed, 276 insertions(+), 42 deletions(-)
+
+--- a/drivers/mtd/spi-nor/Kconfig
++++ b/drivers/mtd/spi-nor/Kconfig
+@@ -24,6 +24,50 @@ config MTD_SPI_NOR_USE_4K_SECTORS
+ 	  Please note that some tools/drivers/filesystems may not work with
+ 	  4096 B erase size (e.g. UBIFS requires 15 KiB as a minimum).
+ 
++choice
++	prompt "Software write protection at boot"
++	default MTD_SPI_NOR_SWP_DISABLE_ON_VOLATILE
++
++config MTD_SPI_NOR_SWP_DISABLE
++	bool "Disable SWP on any flashes (legacy behavior)"
++	help
++	  This option disables the software write protection on any SPI
++	  flashes at boot-up.
++
++	  Depending on the flash chip this either clears the block protection
++	  bits or does a "Global Unprotect" command.
++
++	  Don't use this if you intent to use the software write protection
++	  of your SPI flash. This is only to keep backwards compatibility.
++
++config MTD_SPI_NOR_SWP_DISABLE_ON_VOLATILE
++	bool "Disable SWP on flashes w/ volatile protection bits"
++	help
++	  Some SPI flashes have volatile block protection bits, ie. after a
++	  power-up or a reset the flash is software write protected by
++	  default.
++
++	  This option disables the software write protection for these kind
++	  of flashes while keeping it enabled for any other SPI flashes
++	  which have non-volatile write protection bits.
++
++	  If the software write protection will be disabled depending on
++	  the flash either the block protection bits are cleared or a
++	  "Global Unprotect" command is issued.
++
++	  If you are unsure, select this option.
++
++config MTD_SPI_NOR_SWP_KEEP
++	bool "Keep software write protection as is"
++	help
++	  If you select this option the software write protection of any
++	  SPI flashes will not be changed. If your flash is software write
++	  protected or will be automatically software write protected after
++	  power-up you have to manually unlock it before you are able to
++	  write to it.
++
++endchoice
++
+ source "drivers/mtd/spi-nor/controllers/Kconfig"
+ 
+ endif # MTD_SPI_NOR
+--- a/drivers/mtd/spi-nor/core.c
++++ b/drivers/mtd/spi-nor/core.c
+@@ -276,7 +276,7 @@ int spi_nor_write_disable(struct spi_nor
+  *
+  * Return: 0 on success, -errno otherwise.
+  */
+-static int spi_nor_read_sr(struct spi_nor *nor, u8 *sr)
++int spi_nor_read_sr(struct spi_nor *nor, u8 *sr)
+ {
+ 	int ret;
+ 
+@@ -720,7 +720,7 @@ int spi_nor_wait_till_ready(struct spi_n
+  *
+  * Return: 0 on success, -errno otherwise.
+  */
+-static int spi_nor_write_sr(struct spi_nor *nor, const u8 *sr, size_t len)
++int spi_nor_write_sr(struct spi_nor *nor, const u8 *sr, size_t len)
+ {
+ 	int ret;
+ 
+@@ -3209,6 +3209,8 @@ int spi_nor_scan(struct spi_nor *nor, co
+ 		nor->flags |= SNOR_F_NO_OP_CHIP_ERASE;
+ 	if (info->flags & USE_CLSR)
+ 		nor->flags |= SNOR_F_USE_CLSR;
++	if (info->flags & SPI_NOR_SWP_IS_VOLATILE)
++		nor->flags |= SNOR_F_SWP_IS_VOLATILE;
+ 
+ 	if (info->flags & SPI_NOR_4BIT_BP) {
+ 		nor->flags |= SNOR_F_HAS_4BIT_BP;
+--- a/drivers/mtd/spi-nor/core.h
++++ b/drivers/mtd/spi-nor/core.h
+@@ -26,6 +26,9 @@ enum spi_nor_option_flags {
+ 	SNOR_F_HAS_SR_TB_BIT6	= BIT(11),
+ 	SNOR_F_HAS_4BIT_BP      = BIT(12),
+ 	SNOR_F_HAS_SR_BP3_BIT6  = BIT(13),
++	SNOR_F_IO_MODE_EN_VOLATILE = BIT(14),
++	SNOR_F_SOFT_RESET	= BIT(15),
++	SNOR_F_SWP_IS_VOLATILE	= BIT(16),
+ };
+ 
+ struct spi_nor_read_command {
+@@ -311,6 +314,18 @@ struct flash_info {
+ 					 * BP3 is bit 6 of status register.
+ 					 * Must be used with SPI_NOR_4BIT_BP.
+ 					 */
++#define SPI_NOR_OCTAL_DTR_READ	BIT(19) /* Flash supports octal DTR Read. */
++#define SPI_NOR_OCTAL_DTR_PP	BIT(20) /* Flash supports Octal DTR Page Program */
++#define SPI_NOR_IO_MODE_EN_VOLATILE	BIT(21) /*
++						 * Flash enables the best
++						 * available I/O mode via a
++						 * volatile bit.
++						 */
++#define SPI_NOR_SWP_IS_VOLATILE	BIT(22)	/*
++					 * Flash has volatile software write
++					 * protection bits. Usually these will
++					 * power-up in a write-protected state.
++					 */
+ 
+ 	/* Part specific fixup hooks. */
+ 	const struct spi_nor_fixups *fixups;
+--- a/drivers/mtd/spi-nor/esmt.c
++++ b/drivers/mtd/spi-nor/esmt.c
+@@ -11,7 +11,7 @@
+ static const struct flash_info esmt_parts[] = {
+ 	/* ESMT */
+ 	{ "f25l32pa", INFO(0x8c2016, 0, 64 * 1024, 64,
+-			   SECT_4K | SPI_NOR_HAS_LOCK) },
++			   SECT_4K | SPI_NOR_HAS_LOCK | SPI_NOR_SWP_IS_VOLATILE) },
+ 	{ "f25l32qa", INFO(0x8c4116, 0, 64 * 1024, 64,
+ 			   SECT_4K | SPI_NOR_HAS_LOCK) },
+ 	{ "f25l64qa", INFO(0x8c4117, 0, 64 * 1024, 128,
+--- a/drivers/mtd/spi-nor/intel.c
++++ b/drivers/mtd/spi-nor/intel.c
+@@ -10,18 +10,12 @@
+ 
+ static const struct flash_info intel_parts[] = {
+ 	/* Intel/Numonyx -- xxxs33b */
+-	{ "160s33b",  INFO(0x898911, 0, 64 * 1024,  32, 0) },
+-	{ "320s33b",  INFO(0x898912, 0, 64 * 1024,  64, 0) },
+-	{ "640s33b",  INFO(0x898913, 0, 64 * 1024, 128, 0) },
+-};
+-
+-static void intel_default_init(struct spi_nor *nor)
+-{
+-	nor->flags |= SNOR_F_HAS_LOCK;
+-}
+-
+-static const struct spi_nor_fixups intel_fixups = {
+-	.default_init = intel_default_init,
++	{ "160s33b",  INFO(0x898911, 0, 64 * 1024,  32,
++			   SPI_NOR_HAS_LOCK | SPI_NOR_SWP_IS_VOLATILE) },
++	{ "320s33b",  INFO(0x898912, 0, 64 * 1024,  64,
++			   SPI_NOR_HAS_LOCK | SPI_NOR_SWP_IS_VOLATILE) },
++	{ "640s33b",  INFO(0x898913, 0, 64 * 1024, 128,
++			   SPI_NOR_HAS_LOCK | SPI_NOR_SWP_IS_VOLATILE) },
+ };
+ 
+ const struct spi_nor_manufacturer spi_nor_intel = {
+--- a/drivers/mtd/spi-nor/sst.c
++++ b/drivers/mtd/spi-nor/sst.c
+@@ -11,27 +11,28 @@
+ static const struct flash_info sst_parts[] = {
+ 	/* SST -- large erase sizes are "overlays", "sectors" are 4K */
+ 	{ "sst25vf040b", INFO(0xbf258d, 0, 64 * 1024,  8,
+-			      SECT_4K | SST_WRITE) },
++			      SECT_4K | SST_WRITE | SPI_NOR_HAS_LOCK | SPI_NOR_SWP_IS_VOLATILE) },
+ 	{ "sst25vf080b", INFO(0xbf258e, 0, 64 * 1024, 16,
+-			      SECT_4K | SST_WRITE) },
++			      SECT_4K | SST_WRITE | SPI_NOR_HAS_LOCK | SPI_NOR_SWP_IS_VOLATILE) },
+ 	{ "sst25vf016b", INFO(0xbf2541, 0, 64 * 1024, 32,
+-			      SECT_4K | SST_WRITE) },
++			      SECT_4K | SST_WRITE | SPI_NOR_HAS_LOCK | SPI_NOR_SWP_IS_VOLATILE) },
+ 	{ "sst25vf032b", INFO(0xbf254a, 0, 64 * 1024, 64,
+-			      SECT_4K | SST_WRITE) },
++			      SECT_4K | SST_WRITE | SPI_NOR_HAS_LOCK | SPI_NOR_SWP_IS_VOLATILE) },
+ 	{ "sst25vf064c", INFO(0xbf254b, 0, 64 * 1024, 128,
+-			      SECT_4K | SPI_NOR_4BIT_BP) },
++			      SECT_4K | SPI_NOR_4BIT_BP | SPI_NOR_HAS_LOCK |
++				  SPI_NOR_SWP_IS_VOLATILE) },
+ 	{ "sst25wf512",  INFO(0xbf2501, 0, 64 * 1024,  1,
+-			      SECT_4K | SST_WRITE) },
++			      SECT_4K | SST_WRITE | SPI_NOR_HAS_LOCK | SPI_NOR_SWP_IS_VOLATILE) },
+ 	{ "sst25wf010",  INFO(0xbf2502, 0, 64 * 1024,  2,
+-			      SECT_4K | SST_WRITE) },
++			      SECT_4K | SST_WRITE | SPI_NOR_HAS_LOCK | SPI_NOR_SWP_IS_VOLATILE) },
+ 	{ "sst25wf020",  INFO(0xbf2503, 0, 64 * 1024,  4,
+-			      SECT_4K | SST_WRITE) },
+-	{ "sst25wf020a", INFO(0x621612, 0, 64 * 1024,  4, SECT_4K) },
+-	{ "sst25wf040b", INFO(0x621613, 0, 64 * 1024,  8, SECT_4K) },
++			      SECT_4K | SST_WRITE | SPI_NOR_HAS_LOCK | SPI_NOR_SWP_IS_VOLATILE) },
++	{ "sst25wf020a", INFO(0x621612, 0, 64 * 1024,  4, SECT_4K | SPI_NOR_HAS_LOCK) },
++	{ "sst25wf040b", INFO(0x621613, 0, 64 * 1024,  8, SECT_4K | SPI_NOR_HAS_LOCK) },
+ 	{ "sst25wf040",  INFO(0xbf2504, 0, 64 * 1024,  8,
+-			      SECT_4K | SST_WRITE) },
++			      SECT_4K | SST_WRITE | SPI_NOR_HAS_LOCK | SPI_NOR_SWP_IS_VOLATILE) },
+ 	{ "sst25wf080",  INFO(0xbf2505, 0, 64 * 1024, 16,
+-			      SECT_4K | SST_WRITE) },
++			      SECT_4K | SST_WRITE | SPI_NOR_HAS_LOCK | SPI_NOR_SWP_IS_VOLATILE) },
+ 	{ "sst26wf016b", INFO(0xbf2651, 0, 64 * 1024, 32,
+ 			      SECT_4K | SPI_NOR_DUAL_READ |
+ 			      SPI_NOR_QUAD_READ) },
