@@ -18,7 +18,8 @@ ipq40xx_setup_interfaces()
 	zyxel,nbg6617)
 		ucidef_set_interfaces_lan_wan "lan1 lan2 lan3 lan4" "wan"
 		;;
-	8dev,jalapeno)
+	8dev,jalapeno|\
+	openmesh,a42)
 		ucidef_set_interfaces_lan_wan "lan" "wan"
 		;;
 	aruba,ap-303|\
@@ -62,7 +63,6 @@ ipq40xx_setup_interfaces()
 	cilab,meshpoint-one|\
 	edgecore,ecw5211|\
 	edgecore,oap100|\
-	openmesh,a42|\
 	openmesh,a62)
 		ucidef_set_interfaces_lan_wan "eth1" "eth0"
 		;;
