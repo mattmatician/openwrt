@@ -9,6 +9,10 @@
 	model = "Luma Home WRTQ-329ACN";
 	compatible = "luma,wrtq-329acn";
 
+	aliases {
+		ethernet1 = &swport5;
+	};
+
 	i2c-gpio {
 		compatible = "i2c-gpio";
 		sda-gpios = <&tlmm 1 (GPIO_ACTIVE_HIGH|GPIO_OPEN_DRAIN)>;
@@ -230,6 +234,24 @@
 };
 
 &usb3_ss_phy {
+	status = "okay";
+};
+
+&gmac {
+	status = "okay";
+};
+
+&switch {
+	status = "okay";
+};
+
+&swport3 {
+	status = "okay";
+
+	label = "lan";
+};
+
+&swport5 {
 	status = "okay";
 };
 
