@@ -21,6 +21,7 @@ ipq40xx_setup_interfaces()
 	8dev,jalapeno|\
 	alfa-network,ap120c-ac|\
 	engenius,emr3500|\
+	engenius,ens620ext|\
 	openmesh,a42)
 		ucidef_set_interfaces_lan_wan "lan" "wan"
 		;;
@@ -35,7 +36,6 @@ ipq40xx_setup_interfaces()
 	glinet,gl-b1300)
 		ucidef_set_interfaces_lan_wan "lan1 lan2" "wan"
 		;;
-	engenius,ens620ext|\
 	luma,wrtq-329acn|\
 	netgear,wac510|\
 	plasmacloud,pa1200|\
