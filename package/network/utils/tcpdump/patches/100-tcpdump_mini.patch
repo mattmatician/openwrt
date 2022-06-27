@@ -1,6 +1,6 @@
 --- a/Makefile.in
 +++ b/Makefile.in
-@@ -73,6 +73,111 @@ DEPENDENCY_CFLAG = @DEPENDENCY_CFLAG@
+@@ -73,6 +73,85 @@ DEPENDENCY_CFLAG = @DEPENDENCY_CFLAG@
  
  CSRC =	fptype.c tcpdump.c
  
@@ -27,24 +27,13 @@
 +	print.c \
 +	print-802_11.c \
 +	print-aodv.c \
-+	print-arista.c \
 +	print-arp.c \
 +	print-ascii.c \
-+	print-atalk.c \
-+	print-atm.c \
 +	print-bootp.c \
-+	print-brcmtag.c \
-+	print-bt.c \
-+	print-chdlc.c \
 +	print-dhcp6.c \
 +	print-domain.c \
-+	print-dsa.c \
 +	print-eap.c \
-+	print-eigrp.c \
-+	print-enc.c \
 +	print-ether.c \
-+	print-fddi.c \
-+	print-fr.c \
 +	print-ftp.c \
 +	print-gre.c \
 +	print-http.c \
@@ -56,53 +45,38 @@
 +	print-ip6.c \
 +	print-ip6opts.c \
 +	print-ipnet.c \
-+	print-ipoib.c \
-+	print-ipx.c \
-+	print-isoclns.c \
-+	print-lane.c \
 +	print-l2tp.c \
 +	print-llc.c \
 +	print-lldp.c \
 +	print-loopback.c \
 +	print-nfs.c \
-+	print-nsh.c \
 +	print-ntp.c \
 +	print-null.c \
-+	print-macsec.c \
-+	print-mpls.c \
 +	print-olsr.c \
 +	print-ospf.c \
 +	print-ospf6.c \
-+	print-pktap.c \
 +	print-ppp.c \
 +	print-pppoe.c \
 +	print-pptp.c \
-+	print-ptp.c \
 +	print-radius.c \
 +	print-raw.c \
 +	print-rsvp.c \
 +	print-rt6.c \
 +	print-rtsp.c \
 +	print-sip.c \
-+	print-sl.c \
 +	print-sll.c \
 +	print-smtp.c \
 +	print-snmp.c \
 +	print-someip.c \
 +	print-ssh.c \
 +	print-stp.c \
-+	print-sunatm.c \
 +	print-sunrpc.c \
-+	print-symantec.c \
 +	print-syslog.c \
 +	print-tcp.c \
 +	print-telnet.c \
 +	print-tftp.c \
-+	print-token.c \
 +	print-udp.c \
 +	print-unsupported.c \
-+	print-usb.c \
-+	print-vsock.c \
 +	signature.c \
 +	strtoaddr.c \
 +	util-print.c
@@ -112,7 +86,7 @@
  LIBNETDISSECT_SRC=\
  	addrtoname.c \
  	addrtostr.c \
-@@ -252,6 +357,8 @@ LIBNETDISSECT_SRC=\
+@@ -252,6 +331,8 @@ LIBNETDISSECT_SRC=\
  	strtoaddr.c \
  	util-print.c
  
@@ -789,37 +763,17 @@
  #ifdef DLT_APPLE_IP_OVER_IEEE1394
  	{ ap1394_if_print,	DLT_APPLE_IP_OVER_IEEE1394 },
  #endif
-@@ -55,6 +56,7 @@ static const struct printer printers[] =
- #ifdef DLT_ARCNET_LINUX
- 	{ arcnet_linux_if_print, DLT_ARCNET_LINUX },
- #endif
-+#endif
- 	{ atm_if_print,		DLT_ATM_RFC1483 },
- #ifdef DLT_DSA_TAG_BRCM
- 	{ brcm_tag_if_print,	DLT_DSA_TAG_BRCM },
-@@ -71,12 +73,14 @@ static const struct printer printers[] =
- #ifdef DLT_HDLC
- 	{ chdlc_if_print,	DLT_HDLC },
- #endif
-+#ifndef TCPDUMP_MINI
- #ifdef DLT_ATM_CLIP
- 	{ cip_if_print,		DLT_ATM_CLIP },
- #endif
+@@ -77,9 +78,7 @@ static const struct printer printers[] =
  #ifdef DLT_CIP
  	{ cip_if_print,		DLT_CIP },
  #endif
-+#endif
- #ifdef DLT_DSA_TAG_DSA
+-#ifdef DLT_DSA_TAG_DSA
  	{ dsa_if_print,		DLT_DSA_TAG_DSA },
+-#endif
+ #ifdef DLT_DSA_TAG_EDSA
+ 	{ edsa_if_print,	DLT_DSA_TAG_EDSA },
  #endif
-@@ -88,12 +92,14 @@ static const struct printer printers[] =
- #endif
- 	{ ether_if_print,	DLT_EN10MB },
- 	{ fddi_if_print,	DLT_FDDI },
-+#ifndef TCPDUMP_MINI
- #ifdef DLT_FR
- 	{ fr_if_print,		DLT_FR },
- #endif
+@@ -94,6 +93,7 @@ static const struct printer printers[] =
  #ifdef DLT_FRELAY
  	{ fr_if_print,		DLT_FRELAY },
  #endif
@@ -827,7 +781,7 @@
  #ifdef DLT_IEEE802_11
  	{ ieee802_11_if_print,	DLT_IEEE802_11},
  #endif
-@@ -103,6 +109,7 @@ static const struct printer printers[] =
+@@ -103,6 +103,7 @@ static const struct printer printers[] =
  #ifdef DLT_IEEE802_11_RADIO
  	{ ieee802_11_radio_if_print,	DLT_IEEE802_11_RADIO },
  #endif
@@ -835,7 +789,7 @@
  #ifdef DLT_IEEE802_15_4
  	{ ieee802_15_4_if_print, DLT_IEEE802_15_4 },
  #endif
-@@ -115,12 +122,14 @@ static const struct printer printers[] =
+@@ -115,9 +116,11 @@ static const struct printer printers[] =
  #ifdef DLT_IP_OVER_FC
  	{ ipfc_if_print,	DLT_IP_OVER_FC },
  #endif
@@ -843,30 +797,28 @@
  #ifdef DLT_IPNET
  	{ ipnet_if_print,	DLT_IPNET },
  #endif
++#ifndef TCPDUMP_MINI
  #ifdef DLT_IPOIB
  	{ ipoib_if_print,       DLT_IPOIB },
  #endif
-+#ifndef TCPDUMP_MINI
- #ifdef DLT_JUNIPER_ATM1
- 	{ juniper_atm1_if_print, DLT_JUNIPER_ATM1 },
- #endif
-@@ -166,6 +175,7 @@ static const struct printer printers[] =
- #ifdef DLT_JUNIPER_SERVICES
- 	{ juniper_services_if_print, DLT_JUNIPER_SERVICES },
+@@ -172,19 +175,23 @@ static const struct printer printers[] =
+ #ifdef DLT_MFR
+ 	{ mfr_if_print,		DLT_MFR },
  #endif
 +#endif
- #ifdef DLT_LTALK
- 	{ ltalk_if_print,	DLT_LTALK },
+ #ifdef DLT_NETANALYZER
+ 	{ netanalyzer_if_print, DLT_NETANALYZER },
  #endif
-@@ -178,19 +188,24 @@ static const struct printer printers[] =
  #ifdef DLT_NETANALYZER_TRANSPARENT
  	{ netanalyzer_transparent_if_print, DLT_NETANALYZER_TRANSPARENT },
  #endif
+-#ifdef DLT_NFLOG
+-	{ nflog_if_print,	DLT_NFLOG},
 +#ifndef TCPDUMP_MINI
- #ifdef DLT_NFLOG
- 	{ nflog_if_print,	DLT_NFLOG},
++	#ifdef DLT_NFLOG
++		{ nflog_if_print,	DLT_NFLOG},
++	#endif
  #endif
-+#endif
  	{ null_if_print,	DLT_NULL },
  #ifdef DLT_LOOP
  	{ null_if_print,	DLT_LOOP },
@@ -875,34 +827,11 @@
  #if defined(DLT_PFLOG) && defined(HAVE_NET_IF_PFLOG_H)
  	{ pflog_if_print,	DLT_PFLOG },
  #endif
-+#endif
- #ifdef DLT_PKTAP
- 	{ pktap_if_print,	DLT_PKTAP },
+@@ -243,6 +250,7 @@ static const struct printer printers[] =
+ #ifdef DLT_VSOCK
+ 	{ vsock_if_print,	DLT_VSOCK },
  #endif
-+#ifndef TCPDUMP_MINI
- #ifdef DLT_PPI
- 	{ ppi_if_print,		DLT_PPI },
- #endif
-@@ -200,6 +215,7 @@ static const struct printer printers[] =
- #ifdef DLT_PPP_SERIAL
- 	{ ppp_hdlc_if_print,	DLT_PPP_SERIAL },
- #endif
-+#endif
- 	{ ppp_if_print,		DLT_PPP },
- #ifdef DLT_PPP_PPPD
- 	{ ppp_if_print,		DLT_PPP_PPPD },
-@@ -211,12 +227,14 @@ static const struct printer printers[] =
- 	{ prism_if_print,	DLT_PRISM_HEADER },
- #endif
- 	{ raw_if_print,		DLT_RAW },
-+#ifndef TCPDUMP_MINI
- #ifdef DLT_IPV4
- 	{ raw_if_print,		DLT_IPV4 },
- #endif
- #ifdef DLT_IPV6
- 	{ raw_if_print,		DLT_IPV6 },
- #endif
-+#endif
- #ifdef DLT_SLIP_BSDOS
- 	{ sl_bsdos_if_print,	DLT_SLIP_BSDOS },
- #endif
++#endif	
+ 	{ NULL,                 0 },
+ };
+ 
