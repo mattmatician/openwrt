@@ -1,0 +1,8 @@
+// SPDX-License-Identifier: GPL-2.0-only
+
+#include "ar7100_mikrotik_routerboard-4xx.dtsi"
+
+/ {
+	compatible = "mikrotik,routerboard-450g", "qca,ar7161";
+	model = "MikroTik RouterBOARD 450G";
+};

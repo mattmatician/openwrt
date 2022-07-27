@@ -31,6 +31,7 @@ platform_do_upgrade() {
 	local board=$(board_name)
 
 	case "$board" in
+	mikrotik,routerboard-450g|\
 	mikrotik,routerboard-493g|\
 	mikrotik,routerboard-912uag-2hpnd|\
 	mikrotik,routerboard-921gs-5hpacd-15s|\

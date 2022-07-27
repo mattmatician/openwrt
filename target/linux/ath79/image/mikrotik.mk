@@ -1,5 +1,14 @@
 include ./common-mikrotik.mk
 
+define Device/mikrotik_routerboard-450g
+  $(Device/mikrotik_nand)
+  SOC := ar7161
+  DEVICE_MODEL := RouterBOARD 450G
+  DEVICE_PACKAGES += kmod-usb-ohci kmod-usb2
+  SUPPORTED_DEVICES += rb-450g
+endef
+TARGET_DEVICES += mikrotik_routerboard-450g
+
 define Device/mikrotik_routerboard-493g
   $(Device/mikrotik_nand)
   SOC := ar7161

@@ -7,6 +7,7 @@ ath79_setup_interfaces()
 	local board="$1"
 
 	case "$board" in
+	ikrotik,routerboard-450g\|
 	mikrotik,routerboard-493g)
 		ucidef_set_interfaces_lan_wan "eth0.1 eth1.1" "eth0.2"
 		ucidef_add_switch "switch0" \
