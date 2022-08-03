@@ -1,0 +1,105 @@
+// SPDX-License-Identifier: GPL-2.0-or-later OR MIT
+
+#include "qca956x.dtsi"
+
+#include <dt-bindings/gpio/gpio.h>
+#include <dt-bindings/input/input.h>
+
+/ {
+	model = "AVM FRITZ!WLAN Repeater 2400";
+	compatible = "avm,fritz2400", "qca,qcn5500", "qca,qca9560";
+};
+
+&pcie {
+	status = "okay";
+
+	wifi@0,0 {
+		compatible = "qcom,ath10k";
+		reg = <0 0 0 0 0>;
+	};
+};
+
+&spi {
+	status = "okay";
+
+	flash@0 {
+		compatible = "jedec,spi-nor";
+		reg = <0>;
+		spi-max-frequency = <25000000>;
+
+		partitions {
+			compatible = "fixed-partitions";
+			#address-cells = <1>;
+			#size-cells = <1>;
+
+			partition@0 {
+				label = "urlader";
+				reg = <0x00000 0x20000>;
+				read-only;
+			};
+
+			partition@20000 {
+				label = "tffs (1)";
+				reg = <0x20000 0x70000>;
+				read-only;
+			};
+
+			partition@90000 {
+				label = "reserved-kernel";
+				reg = <0x90000 0x1f70000>;
+				read-only;
+			};
+
+			partition@2020000 {
+				label = "tffs (2)";
+				reg = <0x2020000 0x70000>;
+				read-only;
+			};
+
+			partition@2090000 {
+				compatible = "avm,eva-firmware";
+				label = "kernel";
+				reg = <0x2090000 0x242e00>;
+			};
+
+			partition@22d2e00 {
+				label = "rootfs";
+				reg = <0x22d2e00 0x1d2d200>;
+			};
+		};
+	};
+};
+
+
+&wmac {
+	/* Does not work due to lack of QCN5502 support in ath9k. */
+	status = "disabled";
+};
+
+&eth0 {
+	status = "okay";
+
+	pll-data = <0x03000101 0x00000101 0x00001919>;
+
+	phy-mode = "sgmii";
+	phy-handle = <&phy0>;
+};
+
+&mdio0 {
+	status = "okay";
+
+	phy0: ethernet-phy@0 {
+		reg = <0>;
+		phy-mode = "sgmii";
+		qca,mib-poll-interval = <500>;
+
+		qca,ar8327-initvals = <
+			0x04 0x80080080 /* PORT0 PAD MODE CTRL */
+			0x08 0x00000000 /* PORT5 PAD MODE CTRL */
+			0x0c 0x00000000 /* PORT6 PAD MODE CTRL */
+			0x10 0x00000080 /* POWER_ON_STRAP */
+			0x7c 0x0000007e /* PORT0_STATUS */
+			0x94 0x00000200 /* PORT6_STATUS */
+			>;
+	};
+};

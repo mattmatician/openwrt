@@ -471,6 +471,15 @@ define Device/avm_fritz1750e
 endef
 TARGET_DEVICES += avm_fritz1750e
 
+define Device/avm_fritz2400
+  $(Device/avm)
+  SOC := qcn5502
+  DEVICE_MODEL := FRITZ!WLAN Repeater 2400
+  IMAGE_SIZE := 14528k
+  DEVICE_PACKAGES := kmod-ath10k-ct ath10k-firmware-qca9984-ct
+endef
+TARGET_DEVICES += avm_fritz2400
+
 define Device/avm_fritz300e
   $(Device/avm)
   SOC := ar7242
