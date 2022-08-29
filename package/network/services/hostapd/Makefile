@@ -242,6 +242,7 @@ define Package/wpad
 $(call Package/wpad/Default,$(1))
   TITLE+= (built-in full)
   VARIANT:=wpad-full-internal
+  PROVIDES+=wpad-full
 endef
 
 define Package/wpad/description
@@ -254,6 +255,7 @@ $(call Package/wpad/Default,$(1))
   TITLE+= (OpenSSL full)
   VARIANT:=wpad-full-openssl
   DEPENDS+=+PACKAGE_wpad-openssl:libopenssl
+  PROVIDES+=wpad-full
 endef
 
 Package/wpad-openssl/description = $(Package/wpad/description)
@@ -263,6 +265,7 @@ $(call Package/wpad/Default,$(1))
   TITLE+= (wolfSSL full)
   VARIANT:=wpad-full-wolfssl
   DEPENDS+=+PACKAGE_wpad-wolfssl:libwolfssl
+  PROVIDES+=wpad-full
 endef
 
 Package/wpad-wolfssl/description = $(Package/wpad/description)
