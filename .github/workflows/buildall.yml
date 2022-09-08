@@ -67,7 +67,7 @@ jobs:
       - name: Build OpenWrt
         run: |
           cd "$WORKPATH"
-          make -j$(nproc) BUILD_LOG=1
+          make -j1 V=s BUILD_LOG=1
 
       - name: Move logs to GITHUB_WORKSPACE
         if: always()
