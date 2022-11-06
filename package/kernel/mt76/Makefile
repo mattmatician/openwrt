@@ -39,7 +39,7 @@ CMAKE_BINARY_DIR:=$(PKG_BUILD_DIR)/tools
 define KernelPackage/mt76-default
   SUBMENU:=Wireless Drivers
   DEPENDS:= \
-	+kmod-mac80211 \
+	+kmod-net-mac80211 \
 	+@DRIVER_11AC_SUPPORT +@DRIVER_11N_SUPPORT
 endef
 

@@ -21,8 +21,8 @@ PKG_BUILD_PARALLEL:=1
 PKG_ASLR_PIE_REGULAR:=1
 
 PKG_CONFIG_DEPENDS:= \
-	CONFIG_PACKAGE_kmod-ath9k \
-	CONFIG_PACKAGE_kmod-cfg80211 \
+	CONFIG_PACKAGE_kmod-net-ath9k \
+	CONFIG_PACKAGE_kmod-net-cfg80211 \
 	CONFIG_PACKAGE_hostapd \
 	CONFIG_PACKAGE_hostapd-basic \
 	CONFIG_PACKAGE_hostapd-mini \
@@ -85,8 +85,8 @@ ifneq ($(CONFIG_DRIVER_11AX_SUPPORT),)
 endif
 
 DRIVER_MAKEOPTS= \
-	CONFIG_ACS=$(CONFIG_PACKAGE_kmod-cfg80211) \
-	CONFIG_DRIVER_NL80211=$(CONFIG_PACKAGE_kmod-cfg80211) \
+	CONFIG_ACS=$(CONFIG_PACKAGE_kmod-net-cfg80211) \
+	CONFIG_DRIVER_NL80211=$(CONFIG_PACKAGE_kmod-net-cfg80211) \
 	CONFIG_IEEE80211N=$(HOSTAPD_IEEE80211N) \
 	CONFIG_IEEE80211AC=$(HOSTAPD_IEEE80211AC) \
 	CONFIG_IEEE80211AX=$(HOSTAPD_IEEE80211AX) \
@@ -134,7 +134,7 @@ ifdef CONFIG_USE_GLIBC
   TARGET_LDFLAGS_C += -lrt
 endif
 
-DRV_DEPENDS:=+PACKAGE_kmod-cfg80211:libnl-tiny
+DRV_DEPENDS:=+PACKAGE_kmod-net-cfg80211:libnl-tiny
 
 
 define Package/hostapd/Default
@@ -311,7 +311,7 @@ endef
 
 define Package/wpad-mesh
 $(call Package/wpad/Default,$(1))
-  DEPENDS+=@PACKAGE_kmod-cfg80211 @(!TARGET_uml||BROKEN)
+  DEPENDS+=@PACKAGE_kmod-net-cfg80211 @(!TARGET_uml||BROKEN)
   PROVIDES+=wpa-supplicant-mesh wpad-mesh
 endef
 
@@ -379,13 +379,13 @@ endef
 define Package/wpa-supplicant-p2p
 $(call Package/wpa-supplicant/Default,$(1))
   TITLE+= (Wi-Fi P2P support)
-  DEPENDS+=@PACKAGE_kmod-cfg80211
+  DEPENDS+=@PACKAGE_kmod-net-cfg80211
   VARIANT:=supplicant-p2p-internal
 endef
 
 define Package/wpa-supplicant-mesh/Default
 $(call Package/wpa-supplicant/Default,$(1))
-  DEPENDS+=@PACKAGE_kmod-cfg80211 @(!TARGET_uml||BROKEN)
+  DEPENDS+=@PACKAGE_kmod-net-cfg80211 @(!TARGET_uml||BROKEN)
   PROVIDES+=wpa-supplicant-mesh
 endef
 
@@ -511,7 +511,7 @@ TARGET_CPPFLAGS := \
 TARGET_CFLAGS += -ffunction-sections -fdata-sections -flto
 TARGET_LDFLAGS += -Wl,--gc-sections -flto=jobserver -fuse-linker-plugin -lubox -lubus
 
-ifdef CONFIG_PACKAGE_kmod-cfg80211
+ifdef CONFIG_PACKAGE_kmod-net-cfg80211
   TARGET_LDFLAGS += -lm -lnl-tiny
 endif
 
