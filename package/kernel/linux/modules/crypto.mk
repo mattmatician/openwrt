@@ -53,7 +53,9 @@ $(eval $(call KernelPackage,crypto-aead))
 define KernelPackage/crypto-arc4
   TITLE:=ARC4 cipher CryptoAPI module
   KCONFIG:= \
+    CONFIG_CRYPTO_USER_API_ENABLE_OBSOLETE \
 	  CONFIG_CRYPTO_ARC4 \
+    CONFIG_CRYPTO_LIB_ARC4 \
 	  CONFIG_CRYPTO_USER_API_ENABLE_OBSOLETE=y
   FILES:= \
 	  $(LINUX_DIR)/crypto/arc4.ko \

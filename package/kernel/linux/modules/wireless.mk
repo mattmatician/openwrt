@@ -14,7 +14,9 @@ define KernelPackage/net-cfg80211
 	   CONFIG_CFG80211_INTERNAL_REGDB=y \
 	   CONFIG_NL80211_TESTMODE=y \
 	   CONFIG_CFG80211_DEBUGFS=y \
-	   CONFIG_CFG80211_CRDA_SUPPORT=y
+	   CONFIG_CFG80211_CRDA_SUPPORT=y \
+     CONFIG_CFG80211_CERTIFICATION_ONUS=y \
+     CONFIG_CFG80211_REQUIRE_SIGNED_REGDB=n
 endef
 
 define KernelPackage/net-cfg80211/description
@@ -26,10 +28,12 @@ $(eval $(call KernelPackage,net-cfg80211))
 define KernelPackage/net-mac80211
   $(call KernelPackage/net-mac80211/Default)
   TITLE:=Linux 802.11 Wireless Networking Stack
-  DEPENDS+= +kmod-net-cfg80211 +hostapd-common +kmod-crypto-aead
+  DEPENDS+= +kmod-net-cfg80211 +hostapd-common +kmod-crypto-aead +kmod-crypto-arc4
   FILES:= $(LINUX_DIR)/net/mac80211/mac80211.ko
   MENU:=1
   KCONFIG:=CONFIG_MAC80211 \
+     CONFIG_CRYPTO_ARC4 \
+     CONFIG_CRYPTO_LIB_ARC4 \
 	   CONFIG_MAC80211_RC_MINSTREL=y \
 	   CONFIG_MAC80211_RC_MINSTREL_HT=y \
 	   CONFIG_MAC80211_RC_MINSTREL_VHT=y \
