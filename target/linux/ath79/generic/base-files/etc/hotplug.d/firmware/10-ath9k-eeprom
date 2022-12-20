@@ -113,7 +113,7 @@ case "$FIRMWARE" in
 		ath9k_patch_mac $(mtd_get_mac_ascii devdata "wlan5mac")
 		;;
 	wd,mynet-wifi-rangeextender)
-		caldata_extract "art" 0x1000 0x1000
+		caldata_extract "art" 0x1000 0x440
 		ath9k_patch_mac $(nvram get wl0_hwaddr)
 		;;
 	*)
