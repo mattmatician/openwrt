@@ -125,6 +125,8 @@ define KernelPackage/mac80211
   KCONFIG:=\
 	CONFIG_AVERAGE=y
   FILES:= $(PKG_BUILD_DIR)/net/mac80211/mac80211.ko
+  AUTOLOAD:=$(call AutoProbe,mac80211)
+  MODPARAMS.mac80211:=allow_ap_scan=1
   ABI_VERSION:=$(PKG_VERSION)-$(PKG_RELEASE)
   MENU:=1
 endef

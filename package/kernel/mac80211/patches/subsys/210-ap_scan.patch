@@ -1,19 +1,58 @@
-From: Felix Fietkau <nbd@nbd.name>
-Date: Wed, 3 Oct 2012 00:00:00 +0200
-Subject: [PATCH] mac80211: allow scans in access point mode (for site survey)
+From 14953cceafc22bc8f105a30c956fdef3c7142f2f Mon Sep 17 00:00:00 2001
+From: Nick Hainke <vincent@systemli.org>
+Date: Mon, 9 Jan 2023 23:56:46 +0100
+Subject: [PATCH] wifi: mac80211: add support for scanning in ap mode
 
+OpenWRT has shipped a patch since 2011 that allows it to perform a scan
+in AP mode, whether it is supported by the driver or not. In certain
+situations, it may be desirable to scan an interface that is currently
+in AP mode regardless of whether frames are missed. The patch adds a
+module parameter "allow_ap_scan" that, if set to true, allows the behavior
+described above.
+
+Tested-on: TP Link Archer C7 V2 (Qualcomm Atheros QCA9558,
+           Qualcomm Atheros QCA9880-BR4A) with OpenWrt Linux 5.15.86
+
+Signed-off-by: Nick Hainke <vincent@systemli.org>
 ---
- net/mac80211/cfg.c | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
+ net/mac80211/cfg.c         | 3 +++
+ net/mac80211/ieee80211_i.h | 3 +++
+ net/mac80211/main.c        | 5 +++++
+ 3 files changed, 11 insertions(+)
 
 --- a/net/mac80211/cfg.c
 +++ b/net/mac80211/cfg.c
-@@ -2720,6 +2720,8 @@ static int ieee80211_scan(struct wiphy *
+@@ -2720,6 +2720,9 @@ static int ieee80211_scan(struct wiphy *
  		 */
  		fallthrough;
  	case NL80211_IFTYPE_AP:
-+		/* skip check */
-+		break;
++		/* Support scanning in AP mode regardless of driver support. */
++		if (allow_ap_scan)
++			break;
  		/*
  		 * If the scan has been forced (and the driver supports
  		 * forcing), don't care about being beaconing already.
+--- a/net/mac80211/ieee80211_i.h
++++ b/net/mac80211/ieee80211_i.h
+@@ -2548,4 +2548,7 @@ ieee80211_eht_cap_ie_to_sta_eht_cap(stru
+ 				    const struct ieee80211_eht_cap_elem *eht_cap_ie_elem,
+ 				    u8 eht_cap_len,
+ 				    struct link_sta_info *link_sta);
++
++extern bool allow_ap_scan;
++
+ #endif /* IEEE80211_I_H */
+--- a/net/mac80211/main.c
++++ b/net/mac80211/main.c
+@@ -33,6 +33,11 @@
+ #include "led.h"
+ #include "debugfs.h"
+ 
++bool allow_ap_scan;
++module_param(allow_ap_scan, bool, 0644);
++MODULE_PARM_DESC(allow_ap_scan,
++		 "Support scanning in AP mode regardless of driver support.");
++
+ void ieee80211_configure_filter(struct ieee80211_local *local)
+ {
+ 	u64 mc;
