@@ -231,6 +231,10 @@ ifeq ($(CONFIG_GCC_USE_FANALYZER),y)
   TARGET_CFLAGS+= -fanalyzer
 endif
 
+ifeq ($(CONFIG_GCC_VERSION_13),y)
+  TARGET_CFLAGS+= -gz=zstd
+endif
+
 export PATH:=$(TARGET_PATH)
 export STAGING_DIR STAGING_DIR_HOST STAGING_DIR_HOSTPKG
 export SH_FUNC:=. $(INCLUDE_DIR)/shell.sh;
