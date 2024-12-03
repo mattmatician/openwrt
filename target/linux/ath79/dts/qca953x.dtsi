@@ -72,7 +72,7 @@
 				reg = <0x18040000 0x28>;
 
 				interrupts = <2>;
-				ngpios = <20>;
+				ngpios = <18>;
 
 				gpio-controller;
 				#gpio-cells = <2>;
@@ -150,7 +150,7 @@
 			reg = <0x18070000 0x4>;
 		};
 
-		pcie0: pcie-controller@180c0000 {
+		pcie0: pcie@180c0000 {
 			compatible = "qcom,ar7240-pci";
 			#address-cells = <3>;
 			#size-cells = <2>;

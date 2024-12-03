@@ -10,25 +10,40 @@ PKG_NAME:=libtool
 PKG_CPE_ID:=cpe:/a:gnu:libtool
 PKG_VERSION:=2.4.7
 
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
+PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=@GNU/$(PKG_NAME)
-PKG_HASH:=4f7f217f057ce655ff22559ad221a0fd8ef84ad1fc5fcb6990cecc333aa1635d
+PKG_HASH:=04e96c2404ea70c590c546eba4202a4e12722c640016c12b9b2f1ce3d481e9a8
 
 HOST_BUILD_PARALLEL:=1
 
 include $(INCLUDE_DIR)/host-build.mk
 
+export GNULIB_SRCDIR:=$(HOST_GNULIB_SRCDIR)
+
 HOST_CONFIGURE_VARS += \
 	lt_cv_sys_dlsearch_path=""
+
+define Host/Bootstrap
+	( \
+		cd $(HOST_BUILD_DIR); \
+		$(AM_TOOL_PATHS) \
+		./bootstrap \
+			--copy \
+			--force \
+			--skip-git \
+			--skip-po \
+			--gnulib-srcdir=$(GNULIB_SRCDIR) \
+	)
+endef
 
 define Host/Prepare
 	$(call Host/Prepare/Default)
 	$(call Host/Uninstall)
-	$(if $(QUILT),,(cd $(HOST_BUILD_DIR); touch README-release; $(AM_TOOL_PATHS) ./bootstrap --skip-git --skip-po --force))
+	$(if $(QUILT),,$(call Host/Bootstrap))
 endef
 
 define Host/Configure
-	$(if $(QUILT),(cd $(HOST_BUILD_DIR); touch README-release; $(AM_TOOL_PATHS) ./bootstrap --skip-git --skip-po --force))
+	$(if $(QUILT),$(call Host/Bootstrap))
 	$(call Host/Configure/Default)
 endef
 

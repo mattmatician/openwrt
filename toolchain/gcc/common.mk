@@ -28,13 +28,22 @@ GCC_DIR:=$(PKG_NAME)-$(PKG_VERSION)
 
 PKG_SOURCE_URL:=@GNU/gcc/gcc-$(PKG_VERSION)
 PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.xz
+PKG_CPE_ID:=cpe:/a:gnu:gcc
 
 ifeq ($(PKG_VERSION),11.3.0)
   PKG_HASH:=b47cf2818691f5b1e21df2bb38c795fac2cfbd640ede2d0a5e1c89e338a3ac39
 endif
 
-ifeq ($(PKG_VERSION),12.2.0)
-  PKG_HASH:=e549cf9cf3594a00e27b6589d4322d70e0720cdd213f39beb4181e06926230ff
+ifeq ($(PKG_VERSION),12.3.0)
+  PKG_HASH:=949a5d4f99e786421a93b532b22ffab5578de7321369975b91aec97adfda8c3b
+endif
+
+ifeq ($(PKG_VERSION),13.3.0)
+  PKG_HASH:=0845e9621c9543a13f484e94584a49ffc0129970e9914624235fc1d061a0c083
+endif
+
+ifeq ($(PKG_VERSION),14.2.0)
+  PKG_HASH:=a7b39bc69cbf9e25826c5a60ab26477001f7c08d85cec04bc0e29cabed6f3cc9
 endif
 
 PATCH_DIR=../patches-$(GCC_MAJOR_VERSION).x
@@ -187,10 +196,10 @@ define Host/SetToolchainInfo
 endef
 
 
-ifeq ($(GCC_MAJOR_VERSION),12)
-	GCC_VERSION_FILE:=gcc/genversion.cc
-else
+ifeq ($(GCC_MAJOR_VERSION),11)
 	GCC_VERSION_FILE:=gcc/version.c
+else
+	GCC_VERSION_FILE:=gcc/genversion.cc
 endif
 
 ifneq ($(GCC_PREPARE),)

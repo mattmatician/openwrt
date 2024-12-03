@@ -20,7 +20,8 @@ preinit_set_mac_address() {
 		base_mac=$(cat /sys/class/net/eth0/address)
 		ip link set dev eth1 address $(macaddr_add "$base_mac" 1)
 		;;
-	extreme-networks,ws-ap3915i)
+	extreme-networks,ws-ap3915i|\
+	extreme-networks,ws-ap391x)
 		ip link set dev eth0 address $(mtd_get_mac_ascii CFG1 ethaddr)
 		;;
 	linksys,ea8300|\
@@ -28,6 +29,12 @@ preinit_set_mac_address() {
 		base_mac=$(mtd_get_mac_ascii devinfo hw_mac_addr)
 		ip link set dev lan1 address $(macaddr_add "$base_mac" 1)
 		ip link set dev eth0 address $(macaddr_setbit "$base_mac" 7)
+		;;
+	linksys,whw03)
+		base_mac=$(mmc_get_mac_ascii devinfo hw_mac_addr)
+		ip link set dev eth0 address "$base_mac"
+		ip link set dev lan address "$base_mac"
+		ip link set dev wan address "$base_mac"
 		;;
 	mikrotik,wap-ac|\
 	mikrotik,wap-ac-lte|\

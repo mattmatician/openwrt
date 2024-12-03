@@ -14,13 +14,33 @@ define Build/spi-loader-okli
 	mv "$@.new" "$@"
 endef
 
+define Device/aerohive_br200-wp
+  DEVICE_VENDOR := Aerohive
+  DEVICE_MODEL := BR200-WP
+  BLOCKSIZE := 128k
+  KERNEL_NAME := simpleImage.br200-wp
+  KERNEL := kernel-bin | uImage none
+  KERNEL_INITRAMFS := kernel-bin | uImage none
+  KERNEL_ENTRY := 0x1500000
+  KERNEL_LOADADDR := 0x1500000
+  KERNEL_SIZE := 8m
+  IMAGES := fdt.bin sysupgrade.bin
+  IMAGE/fdt.bin := append-dtb
+  IMAGE/sysupgrade.bin := append-dtb | pad-to 256k | check-size 256k | \
+	append-uImage-fakehdr ramdisk | pad-to 256k | check-size 512k | \
+	append-rootfs | pad-rootfs $$(BLOCKSIZE) | pad-to 41216k | check-size 41216k | \
+	append-kernel | append-metadata
+  IMAGE_SIZE = 63m
+endef
+TARGET_DEVICES += aerohive_br200-wp
+
 define Device/enterasys_ws-ap3715i
   DEVICE_VENDOR := Enterasys
   DEVICE_MODEL := WS-AP3715i
   BLOCKSIZE := 64k
   KERNEL_NAME := simpleImage.ws-ap3715i
-  KERNEL_ENTRY := 0x1000000
-  KERNEL_LOADADDR := 0x1000000
+  KERNEL_ENTRY := 0x1500000
+  KERNEL_LOADADDR := 0x1500000
   KERNEL = kernel-bin | lzma | uImage lzma
   IMAGES := sysupgrade.bin
   IMAGE/sysupgrade.bin := append-kernel | append-rootfs | pad-rootfs | append-metadata
@@ -33,6 +53,7 @@ define Device/tplink_tl-wdr4900-v1
   DEVICE_VARIANT := v1
   DEVICE_COMPAT_VERSION := 1.1
   DEVICE_COMPAT_MESSAGE := Config cannot be migrated from swconfig to DSA
+  DEVICE_PACKAGES := kmod-usb-ledtrig-usbport
   TPLINK_HEADER_VERSION := 1
   TPLINK_HWID := 0x49000001
   TPLINK_HWREV := 1
@@ -40,8 +61,8 @@ define Device/tplink_tl-wdr4900-v1
   KERNEL_NAME := simpleImage.tl-wdr4900-v1
   KERNEL_INITRAMFS :=
   KERNEL := kernel-bin | uImage none -M 0x4f4b4c49 | spi-loader-okli $(1)
-  KERNEL_ENTRY := 0x1000000
-  KERNEL_LOADADDR := 0x1000000
+  KERNEL_ENTRY := 0x1500000
+  KERNEL_LOADADDR := 0x1500000
   SUPPORTED_DEVICES += tl-wdr4900-v1
   COMPILE := loader-$(1)
   COMPILE/loader-$(1) := spi-loader-okli-compile

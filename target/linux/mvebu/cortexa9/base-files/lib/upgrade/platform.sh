@@ -3,10 +3,9 @@
 # Copyright (C) 2016 LEDE-Project.org
 #
 
-RAMFS_COPY_BIN='fw_printenv fw_setenv strings'
+RAMFS_COPY_BIN='fw_printenv fw_setenv seq strings'
 RAMFS_COPY_DATA='/etc/fw_env.config /var/lock/fw_printenv.lock'
 
-PART_NAME=firmware
 REQUIRE_IMAGE_METADATA=1
 
 platform_check_image() {
@@ -52,8 +51,31 @@ platform_do_upgrade() {
 	solidrun,clearfog-pro-a1)
 		legacy_sdcard_do_upgrade "$1"
 		;;
-	fortinet,fg-50e)
+	fortinet,fg-30e|\
+	fortinet,fg-50e|\
+	fortinet,fg-51e|\
+	fortinet,fg-52e|\
+	fortinet,fwf-50e-2r|\
+	fortinet,fwf-51e)
 		fortinet_do_upgrade "$1"
+		;;
+	iij,sa-w2)
+		local envmtd=$(find_mtd_part "bootloader-env")
+		local bootdev=$(grep "BOOTDEV=" "$envmtd")
+		case "${bootdev#*=}" in
+		flash)  PART_NAME="firmware" ;;
+		rescue) PART_NAME="rescue"   ;;
+		*)
+			echo "invalid BOOTDEV is set (\"${bootdev#*=}\")"
+			umount -a
+			reboot -f
+			;;
+		esac
+		default_do_upgrade "$1"
+		;;
+	iptime,nas1dual)
+		PART_NAME=firmware
+		default_do_upgrade "$1"
 		;;
 	linksys,wrt1200ac|\
 	linksys,wrt1900ac-v1|\

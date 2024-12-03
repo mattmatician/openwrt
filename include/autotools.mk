@@ -26,6 +26,8 @@ AM_TOOL_PATHS:= \
 	AUTOPOINT=true \
 	GTKDOCIZE=true
 
+AM_TOOL_PATHS_FAKE:=$(subst = ,=,$(patsubst "%,"$(TRUE)",$(subst =,= ",$(AM_TOOL_PATHS))))
+
 # 1: build dir
 # 2: remove files
 # 3: automake paths
@@ -42,7 +44,7 @@ define autoreconf
 				touch NEWS AUTHORS COPYING ABOUT-NLS ChangeLog; \
 				$(AM_TOOL_PATHS) \
 					LIBTOOLIZE='$(STAGING_DIR_HOST)/bin/libtoolize --install' \
-					$(STAGING_DIR_HOST)/bin/autoreconf -v -f -i -s \
+					$(STAGING_DIR_HOST)/bin/autoreconf -v -f -i \
 					$(if $(word 2,$(3)),--no-recursive) \
 					-B $(STAGING_DIR_HOST)/share/aclocal \
 					$(patsubst %,-I %,$(5)) \

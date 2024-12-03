@@ -1,5 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0-or-later OR MIT
 
+#include <dt-bindings/leds/common.h>
+
 #include "ar9344_mikrotik_routerboard.dtsi"
 
 / {
@@ -24,7 +26,8 @@
 
 &leds {
 	power {
-		label = "green:power";
+		function = LED_FUNCTION_POWER;
+		color = <LED_COLOR_ID_GREEN>;
 		gpios = <&gpio 11 GPIO_ACTIVE_HIGH>;
 		default-state = "on";
 	};
@@ -87,6 +90,7 @@
 	status = "okay";
 
 	nand-ecc-mode = "soft";
+	nand-ecc-step-size = <2048>;
 	qca,nand-swap-dma;
 	qca,nand-scan-fixup;
 
